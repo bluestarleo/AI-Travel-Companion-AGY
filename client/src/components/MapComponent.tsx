@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { MapContainer, TileLayer, Marker, Popup, useMap } from "react-leaflet";
 import L from "leaflet";
 import Link from "next/link";
-import { Article } from "@/lib/db";
+import { Article, CustomMarker, NearbyPoi } from "@/lib/db";
 
 // Fix for default Leaflet marker icon paths in Next.js / Webpack bundling
 L.Icon.Default.mergeOptions({
@@ -12,16 +12,6 @@ L.Icon.Default.mergeOptions({
   iconUrl: "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon.png",
   shadowUrl: "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png",
 });
-
-export interface NearbyPoi {
-  id: number;
-  name: string;
-  category: string;
-  lat: number;
-  lon: number;
-  distance: number;
-  walkingTime: number;
-}
 
 // Controller component to update map view and fit bounds dynamically
 function MapController({
@@ -51,12 +41,6 @@ function MapController({
   }, [center, zoom, customMarker, pois, map]);
 
   return null;
-}
-
-export interface CustomMarker {
-  lat: number;
-  lon: number;
-  label: string;
 }
 
 interface MapComponentProps {

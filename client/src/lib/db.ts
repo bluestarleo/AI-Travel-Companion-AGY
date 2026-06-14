@@ -27,3 +27,20 @@ export interface Article {
   category: string | null;
   popularity: number | null;
 }
+
+export interface CustomMarker {
+  lat: number;
+  lon: number;
+  label: string;
+}
+
+export interface NearbyPoi {
+  id: number;
+  name: string;
+  category: string;
+  lat: number;
+  lon: number;
+  distance: number;
+  walkingTime: number;
+}
+

@@ -2,9 +2,8 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
-import { CityGroup, Article } from "@/lib/db";
+import { CityGroup, Article, CustomMarker, NearbyPoi } from "@/lib/db";
 import MapWrapper from "@/components/MapWrapper";
-import { CustomMarker, NearbyPoi } from "@/components/MapComponent";
 
 interface CityPageContentProps {
   group: CityGroup;

@@ -14,7 +14,7 @@ const DynamicMap = dynamic(() => import("./MapComponent"), {
   ),
 });
 
-import { CustomMarker, NearbyPoi } from "./MapComponent";
+import { CustomMarker, NearbyPoi } from "@/lib/db";
 
 interface MapWrapperProps {
   articles: Article[];
