@@ -22,9 +22,10 @@ interface MapWrapperProps {
   cityId: number;
   customMarker: CustomMarker | null;
   pois: NearbyPoi[];
+  onSelectArticle: (article: Article | null) => void;
 }
 
-export default function MapWrapper({ articles, selectedArticle, cityId, customMarker, pois }: MapWrapperProps) {
+export default function MapWrapper({ articles, selectedArticle, cityId, customMarker, pois, onSelectArticle }: MapWrapperProps) {
   return (
     <DynamicMap
       articles={articles}
@@ -32,6 +33,7 @@ export default function MapWrapper({ articles, selectedArticle, cityId, customMa
       cityId={cityId}
       customMarker={customMarker}
       pois={pois}
+      onSelectArticle={onSelectArticle}
     />
   );
 }

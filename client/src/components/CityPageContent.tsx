@@ -123,6 +123,24 @@ export default function CityPageContent({ group, articles }: CityPageContentProp
     setGeocodeError(null);
   };
 
+  const handleSelectArticle = (article: Article | null) => {
+    setSelectedArticle(article);
+    if (article) {
+      setCustomMarker(null);
+      setPois([]);
+    }
+  };
+
+  // Auto-scroll the active POI card into view in the sidebar list
+  useEffect(() => {
+    if (selectedArticle) {
+      const element = document.getElementById(`poi-card-${selectedArticle.pageid}`);
+      if (element) {
+        element.scrollIntoView({ behavior: "smooth", block: "nearest" });
+      }
+    }
+  }, [selectedArticle]);
+
   return (
     <div className="flex flex-col md:flex-row h-screen bg-[var(--background)] overflow-hidden">
       {/* Sidebar - Left Section */}
@@ -276,11 +294,10 @@ export default function CityPageContent({ group, articles }: CityPageContentProp
               const isSelected = selectedArticle?.pageid === article.pageid;
               return (
                 <button
+                  id={`poi-card-${article.pageid}`}
                   key={article.pageid}
                   onClick={() => {
-                    setSelectedArticle(article);
-                    setCustomMarker(null); // Clear custom search focus
-                    setPois([]); // Clear nearby OSM places
+                    handleSelectArticle(article);
                   }}
                   className={`flex gap-3 text-left p-3 rounded-xl transition-all border outline-none ${
                     isSelected
@@ -344,6 +361,7 @@ export default function CityPageContent({ group, articles }: CityPageContentProp
           cityId={group.id}
           customMarker={customMarker}
           pois={pois}
+          onSelectArticle={handleSelectArticle}
         />
       </main>
     </div>

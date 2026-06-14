@@ -79,6 +79,8 @@ def get_nearby_places(coord_str: str, radius_meters: int = 2000, limit: int = 10
         "ggsradius": min(max(radius_meters, 1), 10000),
         "ggslimit": min(max(limit, 1), 50),
         "prop": "coordinates|pageimages|extracts",
+        "colimit": "max",
+        "coprimary": "all",
         "pithumbsize": 300,
         "exintro": 1,
         "explaintext": 1,

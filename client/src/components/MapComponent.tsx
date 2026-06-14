@@ -65,9 +65,10 @@ interface MapComponentProps {
   cityId: number;
   customMarker: CustomMarker | null;
   pois: NearbyPoi[];
+  onSelectArticle: (article: Article | null) => void;
 }
 
-export default function MapComponent({ articles, selectedArticle, cityId, customMarker, pois }: MapComponentProps) {
+export default function MapComponent({ articles, selectedArticle, cityId, customMarker, pois, onSelectArticle }: MapComponentProps) {
   // Fallback center is Tokyo coordinates if no articles are present
   const defaultCenter: [number, number] = [35.6895, 139.6917];
   
@@ -89,6 +90,17 @@ export default function MapComponent({ articles, selectedArticle, cityId, custom
 
   const center = getMapCenter();
   const zoom = customMarker ? 16 : selectedArticle ? 15 : 13;
+
+  // Custom pulsating amber/gold icon for the selected POI
+  const selectedMarkerIcon = L.divIcon({
+    html: `<div class="relative flex items-center justify-center animate-bounce">
+             <span class="animate-ping absolute inline-flex h-6 w-6 rounded-full bg-amber-400 opacity-75"></span>
+             <span class="relative flex h-4.5 w-4.5 rounded-full bg-amber-500 border-2 border-white shadow-md"></span>
+           </div>`,
+    className: "selected-poi-marker-icon-wrapper",
+    iconSize: [24, 24],
+    iconAnchor: [12, 12],
+  });
 
   return (
     <div className="w-full h-full relative rounded-xl overflow-hidden border border-[var(--muted-border)] shadow-md">
@@ -163,39 +175,48 @@ export default function MapComponent({ articles, selectedArticle, cityId, custom
           </Marker>
         ))}
 
-        {articles.map((article) => (
-          <Marker
-            key={article.pageid}
-            position={[article.lat, article.lon]}
-            eventHandlers={{
-              click: () => {
-                // You can add interactive marker events here if needed
-              },
-            }}
-          >
-            <Popup className="leaflet-popup-custom">
-              <div className="flex flex-col gap-2 p-1 max-w-[240px]">
-                {article.thumbnail && (
-                  <img
-                    src={article.thumbnail}
-                    alt={article.title}
-                    className="w-full h-28 object-cover rounded-md"
-                  />
-                )}
-                <h4 className="font-bold text-sm text-[var(--foreground)]">{article.title}</h4>
-                <p className="text-xs text-[var(--muted)] line-clamp-3">
-                  {article.extract || "No description available."}
-                </p>
-                <Link
-                  href={`/article/${article.pageid}?cityId=${cityId}`}
-                  className="mt-1 text-center bg-blue-600 hover:bg-blue-700 text-white py-1 px-2 rounded text-xs font-semibold transition-colors"
-                >
-                  Read More
-                </Link>
-              </div>
-            </Popup>
-          </Marker>
-        ))}
+        {articles.map((article) => {
+          const isSelected = selectedArticle?.pageid === article.pageid;
+          return (
+            <Marker
+              key={article.pageid}
+              position={[article.lat, article.lon]}
+              icon={isSelected ? selectedMarkerIcon : undefined}
+              eventHandlers={{
+                click: () => {
+                  onSelectArticle(article);
+                },
+              }}
+            >
+              <Popup className="leaflet-popup-custom">
+                <div className="flex flex-col gap-2 p-1 max-w-[240px]">
+                  {article.thumbnail && (
+                    <img
+                      src={article.thumbnail}
+                      alt={article.title}
+                      className="w-full h-28 object-cover rounded-md"
+                    />
+                  )}
+                  <h4 className="font-bold text-sm text-[var(--foreground)]">{article.title}</h4>
+                  {article.category && (
+                    <span className="inline-block text-[9px] font-semibold text-blue-500 bg-blue-500/10 px-2 py-0.5 rounded self-start">
+                      {article.category}
+                    </span>
+                  )}
+                  <p className="text-xs text-[var(--muted)] line-clamp-3">
+                    {article.extract || "No description available."}
+                  </p>
+                  <Link
+                    href={`/article/${article.pageid}?cityId=${cityId}`}
+                    className="mt-1 text-center bg-blue-600 hover:bg-blue-700 text-white py-1 px-2 rounded text-xs font-semibold transition-colors"
+                  >
+                    Read More
+                  </Link>
+                </div>
+              </Popup>
+            </Marker>
+          );
+        })}
       </MapContainer>
     </div>
   );
