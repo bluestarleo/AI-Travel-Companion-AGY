@@ -17,6 +17,8 @@ CREATE TABLE IF NOT EXISTS articles (
     url TEXT NOT NULL,
     thumbnail TEXT,
     extract TEXT,
+    category TEXT,
+    popularity REAL DEFAULT 0.0,
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (group_id) REFERENCES groups (id) ON DELETE CASCADE
 );

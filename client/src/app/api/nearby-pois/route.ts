@@ -45,22 +45,47 @@ export async function GET(req: NextRequest) {
       out body;
     `;
 
-    const url = `https://overpass-api.de/api/interpreter?data=${encodeURIComponent(overpassQuery.trim())}`;
-    
-    console.log(`[POIs API] Querying Overpass API for: (${lat}, ${lon})`);
+    const endpoints = [
+      'https://overpass-api.de/api/interpreter',
+      'https://maps.mail.ru/osm/tools/overpass/api/interpreter'
+    ];
 
-    const response = await fetch(url, {
-      headers: {
-        'User-Agent': 'AITravelCompanion/1.0 (contact: leo.zhu@example.com)'
+    let result = null;
+    let success = false;
+
+    for (const endpoint of endpoints) {
+      try {
+        console.log(`[POIs API] Querying Overpass API at: ${endpoint} for (${lat}, ${lon})`);
+        const url = `${endpoint}?data=${encodeURIComponent(overpassQuery.trim())}`;
+        
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 10000); // 10s timeout per endpoint
+
+        const response = await fetch(url, {
+          headers: {
+            'User-Agent': 'AITravelCompanion/1.0 (contact: leo.zhu@example.com)'
+          },
+          signal: controller.signal
+        });
+        clearTimeout(timeoutId);
+
+        if (response.ok) {
+          result = await response.json();
+          success = true;
+          console.log(`[POIs API] Successfully fetched from: ${endpoint}`);
+          break;
+        } else {
+          console.warn(`[POIs API] Endpoint ${endpoint} returned status: ${response.status}`);
+        }
+      } catch (err: any) {
+        console.error(`[POIs API] Error querying endpoint ${endpoint}:`, err.message || err);
       }
-    });
+    }
 
-    if (!response.ok) {
-      console.error(`[POIs API] Overpass responded with status: ${response.status}`);
+    if (!success || !result) {
       return NextResponse.json({ error: 'Point of interest service is temporarily unavailable.' }, { status: 502 });
     }
 
-    const result = await response.json();
     const elements = result.elements || [];
 
     // Map and filter OSM elements to structured points of interest

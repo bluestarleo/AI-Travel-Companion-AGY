@@ -24,4 +24,6 @@ export interface Article {
   url: string;
   thumbnail: string | null;
   extract: string | null;
+  category: string | null;
+  popularity: number | null;
 }

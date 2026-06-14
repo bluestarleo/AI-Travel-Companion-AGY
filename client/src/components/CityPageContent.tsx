@@ -298,10 +298,22 @@ export default function CityPageContent({ group, articles }: CityPageContentProp
                     </div>
                   )}
                   <div className="flex-1 min-w-0">
-                    <h4 className="font-bold text-sm text-[var(--foreground)] truncate">
-                      {article.title}
-                    </h4>
-                    <p className="text-xs text-[var(--muted)] line-clamp-2 mt-0.5">
+                    <div className="flex items-center justify-between gap-2">
+                      <h4 className="font-bold text-sm text-[var(--foreground)] truncate" title={article.title}>
+                        {article.title}
+                      </h4>
+                      {article.popularity ? (
+                        <span className="text-[9px] font-bold text-amber-500 bg-amber-500/10 px-1.5 py-0.5 rounded-md flex-shrink-0">
+                          ★ {Math.round(article.popularity)}%
+                        </span>
+                      ) : null}
+                    </div>
+                    {article.category && (
+                      <span className="inline-block mt-1 text-[9px] font-medium text-blue-500 bg-blue-500/10 px-1.5 py-0.5 rounded">
+                        {article.category}
+                      </span>
+                    )}
+                    <p className="text-xs text-[var(--muted)] line-clamp-2 mt-1.5">
                       {article.extract || "No description available."}
                     </p>
                     <div className="mt-2 flex items-center justify-between">

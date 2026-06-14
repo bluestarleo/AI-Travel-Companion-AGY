@@ -161,6 +161,7 @@ def add_places_to_database(city_name: str, articles_json: str) -> str:
         
         # 2. Insert all articles in batch
         added_count = 0
+        updated_count = 0
         for article in articles:
             pageid = article.get("pageid")
             title = article.get("title")
@@ -169,14 +170,20 @@ def add_places_to_database(city_name: str, articles_json: str) -> str:
             url = article.get("url")
             thumbnail = article.get("thumbnail")
             extract = article.get("extract")
+            category = article.get("category", "Point of Interest")
+            popularity = article.get("popularity", 0.0)
             
             if not pageid or not title or lat is None or lon is None or not url:
                 continue
                 
+            # Check if POI already exists in the database
+            cursor.execute("SELECT 1 FROM articles WHERE pageid = ?", (pageid,))
+            exists = cursor.fetchone() is not None
+            
             cursor.execute(
                 """
-                INSERT INTO articles (pageid, group_id, title, lat, lon, url, thumbnail, extract)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+                INSERT INTO articles (pageid, group_id, title, lat, lon, url, thumbnail, extract, category, popularity)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                 ON CONFLICT(pageid) DO UPDATE SET
                     group_id=excluded.group_id,
                     title=excluded.title,
@@ -184,14 +191,20 @@ def add_places_to_database(city_name: str, articles_json: str) -> str:
                     lon=excluded.lon,
                     url=excluded.url,
                     thumbnail=excluded.thumbnail,
-                    extract=excluded.extract
+                    extract=excluded.extract,
+                    category=excluded.category,
+                    popularity=excluded.popularity
                 """,
-                (pageid, group_id, title, lat, lon, url, thumbnail, extract)
+                (pageid, group_id, title, lat, lon, url, thumbnail, extract, category, popularity)
             )
-            added_count += 1
+            
+            if exists:
+                updated_count += 1
+            else:
+                added_count += 1
             
         conn.commit()
-        return f"Successfully processed and added {added_count} articles to city '{city_name}' in database."
+        return f"Successfully processed city '{city_name}': added {added_count} new POIs, updated {updated_count} existing POIs."
     except Exception as e:
         conn.rollback()
         return f"Database transaction error: {e}"
@@ -205,10 +218,10 @@ def add_places_to_database(city_name: str, articles_json: str) -> str:
 async def run_agent(city: str):
     print(f"Initializing Antigravity Agent for city: {city}...")
     
-    # System Instructions optimized for minimal API requests using batching
+    # System Instructions optimized for finding, categorizing, and ranking the top 30 tourist POIs
     system_instructions = (
         "You are an autonomous travel research agent.\n"
-        f"Your goal is to find interesting Wikipedia articles/points of interest for a given city and populate the SQLite database.\n"
+        f"Your goal is to find the most popular travel sights/points of interest for a given city and populate the SQLite database.\n"
         f"The SQLite database is located at: {DB_PATH}\n\n"
         "Available Tools:\n"
         "1. get_city_coordinates: Resolve a city name to its latitude and longitude. Returns 'lat|lon'.\n"
@@ -217,10 +230,15 @@ async def run_agent(city: str):
         "Expects the city name as `city_name` and the exact JSON string of articles as `articles_json`.\n\n"
         "Workflow:\n"
         "- First, resolve coordinates for the city.\n"
-        "- Next, query nearby articles using those coordinates (default radius 2000m, limit 10-15 articles).\n"
-        "- Take the JSON output from `get_nearby_places` and pass it directly to `add_places_to_database` as the `articles_json` parameter. "
-        "Do NOT call the database tool multiple times. Do it all in one single call to respect API rate limits.\n"
-        "- Finally, output a brief confirmation message stating that the process is complete."
+        "- Next, query nearby articles using those coordinates (suggested radius 5000m to 10000m, limit 50 articles to capture a wide range of sites).\n"
+        "- From the returned places, analyze their names and descriptions to filter out non-tourist spots (like local high schools, offices, minor metro stations, etc.).\n"
+        "- Select the top ~30 most popular tourist points of interest (major landmarks, sights, historic buildings, cathedrals, museums, parks, squares) based on global fame and significance.\n"
+        "- If the query returns fewer than 30 quality spots, store what is available.\n"
+        "- For each selected POI, add/enhance the following fields in the JSON:\n"
+        "  - `category`: A short descriptive category (e.g. 'Monument', 'Museum', 'Park', 'Cathedral', 'Bridge', 'Square').\n"
+        "  - `popularity`: A rating/ranking signal score between 0.0 and 100.0, where 100.0 is the most famous/visited (e.g., Eiffel Tower or Colosseum would be 98-100; smaller regional museums or parks would be lower).\n"
+        "- Pass the final compiled JSON list of the top ~30 POIs to `add_places_to_database` in a single call.\n"
+        "- Finally, output a brief confirmation message outlining what you added."
     )
     
     config = LocalAgentConfig(
@@ -229,7 +247,7 @@ async def run_agent(city: str):
     )
     
     async with Agent(config) as agent:
-        prompt = f"Find interesting points of interest for {city} and save them to the database."
+        prompt = f"Find the top 30 most popular travel sights/points of interest for {city}, assign them categories and popularity scores, and save them to the database."
         print(f"Sending prompt to agent: '{prompt}'")
         response = await agent.chat(prompt)
         print("\nAgent Output:")

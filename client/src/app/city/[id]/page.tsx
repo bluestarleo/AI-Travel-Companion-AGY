@@ -23,8 +23,8 @@ export default async function CityPage({ params }: PageProps) {
     return notFound();
   }
 
-  // 2. Fetch all articles for this group
-  const articles = db.prepare("SELECT * FROM articles WHERE group_id = ? ORDER BY title ASC").all(groupId) as Article[];
+  // 2. Fetch all articles for this group ordered by popularity
+  const articles = db.prepare("SELECT * FROM articles WHERE group_id = ? ORDER BY popularity DESC, title ASC").all(groupId) as Article[];
 
   return <CityPageContent group={group} articles={articles} />;
 }
