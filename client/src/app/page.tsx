@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { db, CityGroup } from "@/lib/db";
+import AddCityForm from "@/components/AddCityForm";
 import Footer from "@/components/Footer";
 
 // Force Next.js to not static cache this since SQLite data changes via worker script
@@ -30,6 +31,9 @@ export default function Home() {
           Browse active travel destinations, discover historical points of interest, and explore detailed article briefs pulled directly from Wikipedia.
         </p>
       </header>
+
+      {/* AI Agent City Scraper input */}
+      <AddCityForm />
 
       {/* Main content area */}
       <main className="max-w-6xl mx-auto">
