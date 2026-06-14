@@ -1,36 +1,82 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# AI Travel Companion
 
-## Getting Started
+An interactive travel companion application that uses an AI agent to fetch points of interest for cities from Wikipedia, stores them in a local SQLite database, and displays them on a frontend dashboard map.
 
-First, run the development server:
+## 📂 Project Structure
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+This is a monorepo containing three main components:
+
+*   **`client/`**: A React frontend built with **Next.js** (TypeScript, Tailwind CSS). It serves the user interface, renders interactive maps, and displays information about cities and articles.
+*   **`worker/`**: Python utility scripts and a scraper agent powered by the Antigravity SDK (`agent.py`) that queries the Wikipedia GeoSearch APIs and seeds details about points of interest into the database.
+*   **`database/`**: Stores the local SQLite database (`travel_app.db`) and SQL schema files.
+
+---
+
+## 🛠️ Getting Started
+
+### 1. Prerequisites
+
+Make sure you have the following installed:
+*   [Node.js](https://nodejs.org/) (v18+)
+*   [Python 3.10+](https://www.python.org/)
+*   An API Key for Gemini (`GEMINI_API_KEY`) if running the Python agent.
+
+### 2. Environment Setup
+
+Create a `.env` file in the root directory (or update the existing one) and add your API key:
+
+```env
+GEMINI_API_KEY=your_gemini_api_key_here
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+---
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## ⚙️ Running the Components
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+### Step A: Provision the Database
+Before running the UI, initialize the SQLite database using Python:
 
-## Learn More
+```bash
+# Navigate to database directory
+cd database
 
-To learn more about Next.js, take a look at the following resources:
+# Run script to create database tables and seed initial data
+python init_db.py
+```
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+### Step B: Populate the Database with More Cities (Optional)
+You can run the Python scraper agent to automatically pull points of interest for any city (e.g., "San Diego", "Tokyo", etc.) and populate the database:
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+```bash
+# Navigate to the worker directory
+cd ../worker
 
-## Deploy on Vercel
+# Install requirements (ensure standard packages like python-dotenv and google-antigravity are installed)
+pip install python-dotenv
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+# Run the agent for a specific city
+python agent.py "San Diego"
+```
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+### Step C: Run the Next.js Frontend
+Once the database has data, you can start the development server for the UI:
+
+```bash
+# Navigate to the client directory
+cd ../client
+
+# Install frontend dependencies
+npm install
+
+# Start the local development server
+npm run dev
+```
+
+Open [http://localhost:3000](http://localhost:3000) in your browser to view the application.
+
+---
+
+## 🔌 How Frontend & Backend Connect
+
+1.  **Data Generation (Python)**: `worker/agent.py` pulls data from the Wikipedia GeoSearch API and stores it in the local SQLite database (`database/travel_app.db`).
+2.  **Data Consumption (Next.js)**: The `client` Next.js server connects directly to the local SQLite database file `../database/travel_app.db` to read and render the city points of interest onto the interactive browser map.
